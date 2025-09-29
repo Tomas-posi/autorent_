@@ -19,20 +19,27 @@ export default function AuthPage() {
     setLoading(true);
     setError(null);
     try {
+      // Si está en modo registro, primero crea la cuenta
       if (mode === 'register') {
         await api('/empleados/register', {
           method: 'POST',
           body: JSON.stringify({ nombres, apellidos, email, password }),
         });
       }
+
+      // Luego hace login
       const { access_token } = await api<{ access_token: string }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
+
+      // Guarda el token y redirige al menú
       setToken(access_token);
-      alert('Autenticado ✅');
+      window.location.hash = '/menu';
+      // Si prefieres dejar el alert, ponlo antes de la redirección:
+      // alert('Autenticado');
     } catch (err: any) {
-      setError(err.message ?? 'Error');
+      setError(err?.message ?? 'Error');
     } finally {
       setLoading(false);
     }
