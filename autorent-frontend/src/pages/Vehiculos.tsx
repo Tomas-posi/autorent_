@@ -1,5 +1,5 @@
 // src/pages/Vehiculos.tsx
-// Página con listado, formulario de crear/editar y eliminar con confirmación.
+// CRUD de vehículos. Muestra VIN en la tabla, maneja errores de duplicados y permite buscar por placa.
 
 import React, { useEffect, useState } from 'react';
 import { listVehiculos, createVehiculo, updateVehiculo, deleteVehiculo } from '../lib/vehiculos.api';
@@ -12,18 +12,31 @@ import type {
 } from '../lib/types';
 import { COMBUSTIBLES, ESTADOS } from '../lib/types';
 
-// Formatea fechas ISO a un formato legible
+// Da formato legible a fecha/hora
 function fmt(dt: string) {
   try { return new Date(dt).toLocaleString(); } catch { return dt; }
 }
 
-// Valores por defecto del formulario (crear)
+// Traduce errores de duplicado a un mensaje claro
+function friendlyUniqueMessage(raw: string, ctx: { placa?: string; vin?: string }) {
+  const m = raw.toLowerCase();
+  const placaHit = m.includes('placa') || /key\s*\(\s*placa\s*\)/i.test(raw);
+  const vinHit   = m.includes('vin')   || /key\s*\(\s*vin\s*\)/i.test(raw);
+  const isDup    = m.includes('duplicate') || m.includes('unique') || m.includes('ya existe') || m.includes('violates unique');
+
+  if (!isDup) return raw;
+  if (placaHit) return `Ya existe un vehículo con esa placa (${ctx.placa ?? ''}).`;
+  if (vinHit)   return `Ya existe un vehículo con ese VIN (${ctx.vin ?? ''}).`;
+  return 'Ya existe un vehículo con esa placa o ese VIN.';
+}
+
+// Valores por defecto del formulario
 const defaultForm: CreateVehiculoDto = {
   placa: '',
   marca: '',
   modelo: '',
   anio: new Date().getFullYear(),
-  vin: '',
+  vin: '', // obligatorio
   combustible: undefined,
   estado: 'DISPONIBLE',
 };
@@ -36,9 +49,10 @@ export default function VehiculosPage() {
   const [form, setForm] = useState<CreateVehiculoDto>(defaultForm);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    refresh();
-  }, []);
+  // Estado de búsqueda por placa
+  const [q, setQ] = useState('');
+
+  useEffect(() => { refresh(); }, []);
 
   async function refresh() {
     setLoading(true);
@@ -67,8 +81,8 @@ export default function VehiculosPage() {
     if (!Number.isInteger(form.anio) || form.anio < 1980 || form.anio > year + 1) {
       return `El año debe ser un entero entre 1980 y ${year + 1}.`;
     }
-    if (form.vin && form.vin.length !== 17) {
-      return 'El VIN (si se ingresa) debe tener exactamente 17 caracteres.';
+    if (!form.vin || form.vin.length !== 17) {
+      return 'El VIN es obligatorio y debe tener 17 caracteres.';
     }
     if (form.combustible && !COMBUSTIBLES.includes(form.combustible)) {
       return 'Combustible inválido.';
@@ -97,7 +111,9 @@ export default function VehiculosPage() {
       setEditingId(null);
       await refresh();
     } catch (e: any) {
-      alert(e?.message ?? 'Error guardando vehículo');
+      const raw = e?.message ?? 'Error guardando vehículo';
+      const pretty = friendlyUniqueMessage(raw, { placa: form.placa, vin: form.vin || '' });
+      alert(pretty);
     }
   }
 
@@ -108,7 +124,7 @@ export default function VehiculosPage() {
       marca: v.marca,
       modelo: v.modelo,
       anio: v.anio,
-      vin: v.vin ?? '',
+      vin: (v as any).vin ?? '', // asegura string para el form
       combustible: (v.combustible ?? undefined) as TipoCombustible | undefined,
       estado: v.estado as EstadoVehiculo,
     });
@@ -133,6 +149,11 @@ export default function VehiculosPage() {
 
   const combustibles = COMBUSTIBLES;
   const estados = ESTADOS;
+
+  // Filtra por placa según la búsqueda (insensible a mayúsculas)
+  const filtered = rows.filter(v =>
+    v.placa.toLowerCase().includes(q.trim().toLowerCase()),
+  );
 
   return (
     <div style={styles.wrap}>
@@ -193,13 +214,15 @@ export default function VehiculosPage() {
               />
             </div>
             <div style={styles.col}>
-              <label style={styles.label}>VIN (17) *</label>
+              <label style={styles.label}>VIN (17) obligatorio</label>
               <input
                 style={styles.input}
                 value={form.vin}
                 onChange={e => upd('vin', e.target.value.toUpperCase())}
                 placeholder="XXXXXXXXXXXXXXXXX"
+                minLength={17}
                 maxLength={17}
+                required
               />
             </div>
             <div style={styles.col}>
@@ -246,16 +269,36 @@ export default function VehiculosPage() {
           </div>
         </form>
 
-        {/* Tabla de listado */}
+        {/* Listado con búsqueda por placa */}
         <div style={styles.tableWrap}>
           <div style={styles.tableHeader}>
             <span style={{ fontWeight: 700 }}>Listado</span>
-            <button
-              style={styles.secondaryBtn}
-              onClick={() => { setEditingId(null); setForm(defaultForm); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            >
-              + Nuevo
-            </button>
+
+            {/* Buscador por placa */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input
+                style={{ ...styles.input, width: 220 }}
+                value={q}
+                onChange={e => setQ(e.target.value)}
+                placeholder="Buscar por placa (ABC123)"
+              />
+              <button
+                style={styles.secondaryBtn}
+                onClick={() => setQ('')}
+                type="button"
+                title="Limpiar búsqueda"
+              >
+                Limpiar
+              </button>
+
+              <button
+                style={styles.secondaryBtn}
+                onClick={() => { setEditingId(null); setForm(defaultForm); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                type="button"
+              >
+                + Nuevo
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -268,6 +311,7 @@ export default function VehiculosPage() {
                 <thead>
                   <tr>
                     <th style={styles.th}>Placa</th>
+                    <th style={styles.th}>VIN</th>
                     <th style={styles.th}>Marca</th>
                     <th style={styles.th}>Modelo</th>
                     <th style={styles.th}>Año</th>
@@ -278,9 +322,10 @@ export default function VehiculosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map(v => (
+                  {filtered.map(v => (
                     <tr key={v.id}>
                       <td style={styles.td}>{v.placa}</td>
+                      <td style={styles.td}>{(v as any).vin ?? '-'}</td>
                       <td style={styles.td}>{v.marca}</td>
                       <td style={styles.td}>{v.modelo}</td>
                       <td style={styles.td}>{v.anio}</td>
@@ -295,9 +340,9 @@ export default function VehiculosPage() {
                       </td>
                     </tr>
                   ))}
-                  {rows.length === 0 && (
+                  {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={8} style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>
+                      <td colSpan={9} style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>
                         Sin registros
                       </td>
                     </tr>
