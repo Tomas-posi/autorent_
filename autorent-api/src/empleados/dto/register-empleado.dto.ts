@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Length } from 'class-validator';
 
 export class RegisterEmpleadoDto {
   @IsString()
@@ -12,8 +12,10 @@ export class RegisterEmpleadoDto {
   @IsEmail()
   email: string;
 
+  // ajusta si usas MinLength(8) en vez de exactamente 8
   @IsString()
-  @MinLength(8)
+  @Length(8, 8, { message: 'password must be exactly 8 characters long' })
   password: string;
 }
+
 

@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength, IsUrl } from 'class-validator';
 import { RolEmpleado } from '../entities/empleado.entity';
 
 export class CreateEmpleadoDto {
@@ -19,5 +19,9 @@ export class CreateEmpleadoDto {
 
   @IsEnum(RolEmpleado)
   rol: RolEmpleado; // 'ADMIN' | 'EMPLEADO'
+
+  @IsOptional()
+  @IsUrl({}, { message: 'avatarUrl must be a valid URL' })
+  avatarUrl?: string;
 }
 

@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/testing": "^11.1.6",
+    "@nestjs/typeorm": "^11.0.0",
+    "@types/react": "^19.2.0",
+    "bcrypt": "^6.0.0",
+    "class-validator": "^0.14.2",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typeorm": "^0.3.27"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/passport": "^1.0.17",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/react-dom": "^19.2.0",
+    "vite": "^7.1.8"
+  }
+}

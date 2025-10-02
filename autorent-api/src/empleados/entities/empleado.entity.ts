@@ -19,9 +19,12 @@ export class Empleado {
   @Column({ unique: true })
   email: string;
 
-  // Importante: el hash de la contraseña
-  @Column({ name: 'password_hash' })
+  @Column({ name: 'password_hash', type: 'text' })
   passwordHash: string;
+
+  // 👇 avatar opcional, servirá para mostrar la imagen en front
+  @Column({ name: 'avatar_url', type: 'text', nullable: true })
+  avatarUrl: string | null;
 
   @Column({ type: 'enum', enum: RolEmpleado, default: RolEmpleado.EMPLEADO })
   rol: RolEmpleado;
@@ -32,4 +35,5 @@ export class Empleado {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
+
 

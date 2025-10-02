@@ -1,94 +1,64 @@
-import React, { useState } from 'react';
-import { api, setToken } from '../lib/api';
+import React from 'react';
+import { api, setToken } from '../lib/api'; // tu api.ts existente
 
-type Mode = 'login' | 'register';
+interface LoginResponse {
+  access_token: string;
+}
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<Mode>('login');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const [nombres, setNombres] = useState('');
-  const [apellidos, setApellidos] = useState('');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    setLoading(true);
     try {
-      // Si está en modo registro, primero crea la cuenta
-      if (mode === 'register') {
-        await api('/empleados/register', {
-          method: 'POST',
-          body: JSON.stringify({ nombres, apellidos, email, password }),
-        });
-      }
-
-      // Luego hace login
-      const { access_token } = await api<{ access_token: string }>('/auth/login', {
+      // OJO: NO uses /api aquí; tu wrapper ya lo pone
+      const data = await api<LoginResponse>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
 
-      // Guarda el token y redirige al menú
-      setToken(access_token);
-      window.location.hash = '/menu';
-      // Si prefieres dejar el alert, ponlo antes de la redirección:
-      // alert('Autenticado');
+      setToken(data.access_token);
+      window.location.hash = '#/menu';
     } catch (err: any) {
-      setError(err?.message ?? 'Error');
+      setError(err?.message ?? 'Error de autenticación');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div style={styles.wrap}>
-      <div style={styles.card}>
-        <div style={styles.tabs}>
-          <button onClick={() => setMode('login')} style={{ ...styles.tab, ...(mode === 'login' ? styles.tabActive : {}) }}>Iniciar sesión</button>
-          <button onClick={() => setMode('register')} style={{ ...styles.tab, ...(mode === 'register' ? styles.tabActive : {}) }}>Registrarse</button>
-        </div>
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0f172a', color: '#e5e7eb' }}>
+      <form onSubmit={onSubmit} style={{ width: 420, background: '#0b1220', padding: 24, borderRadius: 16, border: '1px solid rgba(255,255,255,.08)' }}>
+        <h1 style={{ marginTop: 0 }}>Iniciar sesión</h1>
 
-        <form onSubmit={onSubmit} style={styles.form}>
-          {mode === 'register' && (
-            <>
-              <label style={styles.label}>Nombres</label>
-              <input style={styles.input} value={nombres} onChange={e => setNombres(e.target.value)} required />
-              <label style={styles.label}>Apellidos</label>
-              <input style={styles.input} value={apellidos} onChange={e => setApellidos(e.target.value)} required />
-            </>
-          )}
+        <label>Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ width: '100%', height: 44, marginBottom: 12 }}
+        />
 
-          <label style={styles.label}>Email</label>
-          <input type="email" style={styles.input} value={email} onChange={e => setEmail(e.target.value)} required />
+        <label>Contraseña</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ width: '100%', height: 44, marginBottom: 12 }}
+        />
 
-          <label style={styles.label}>Contraseña</label>
-          <input type="password" style={styles.input} value={password} onChange={e => setPassword(e.target.value)} required minLength={8} />
+        {error && <div style={{ background: '#7f1d1d', padding: 10, borderRadius: 8, marginBottom: 10 }}>{error}</div>}
 
-          {error && <div style={styles.error}>{error}</div>}
-
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? 'Procesando...' : (mode === 'login' ? 'Entrar' : 'Crear cuenta')}
-          </button>
-        </form>
-      </div>
+        <button type="submit" disabled={loading} style={{ height: 44, width: '100%', borderRadius: 10, background: '#22c55e', color: '#052e16', fontWeight: 800 }}>
+          {loading ? 'Entrando...' : 'Entrar'}
+        </button>
+      </form>
     </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  wrap: { minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0f172a' },
-  card: { width: 360, background: '#111827', padding: 24, borderRadius: 16, boxShadow: '0 10px 30px rgba(0,0,0,.3)', color: '#e5e7eb' },
-  tabs: { display: 'flex', gap: 8, marginBottom: 16 },
-  tab: { flex: 1, padding: '10px 12px', borderRadius: 10, background: '#1f2937', color: '#9ca3af', border: 'none', cursor: 'pointer' },
-  tabActive: { background: '#2563eb', color: 'white' },
-  form: { display: 'grid', gap: 10 },
-  label: { fontSize: 12, color: '#9ca3af' },
-  input: { padding: '10px 12px', borderRadius: 8, border: '1px solid #374151', background: '#0b1220', color: '#e5e7eb' },
-  button: { marginTop: 8, padding: '10px 12px', borderRadius: 10, background: '#22c55e', color: '#02130a', fontWeight: 700, border: 'none', cursor: 'pointer' },
-  error: { background: '#7f1d1d', color: '#fecaca', padding: 8, borderRadius: 8, fontSize: 12 },
-};
