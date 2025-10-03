@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Empleado, RolEmpleado } from '../entities/empleado.entity';
@@ -43,7 +47,8 @@ export class EmpleadosService {
     try {
       return await this.repo.save(entity);
     } catch (e: any) {
-      if (e?.code === '23505') throw new ConflictException('El email ya está registrado');
+      if (e?.code === '23505')
+        throw new ConflictException('El email ya está registrado');
       throw e;
     }
   }
@@ -92,7 +97,8 @@ export class EmpleadosService {
     try {
       return await this.repo.save(emp);
     } catch (e: any) {
-      if (e?.code === '23505') throw new ConflictException('El email ya está registrado');
+      if (e?.code === '23505')
+        throw new ConflictException('El email ya está registrado');
       throw e;
     }
   }
@@ -101,6 +107,3 @@ export class EmpleadosService {
     await this.repo.delete(id);
   }
 }
-
-
-

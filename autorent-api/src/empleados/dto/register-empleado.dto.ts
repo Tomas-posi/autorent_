@@ -17,5 +17,3 @@ export class RegisterEmpleadoDto {
   @Length(8, 8, { message: 'password must be exactly 8 characters long' })
   password: string;
 }
-
-

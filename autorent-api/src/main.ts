@@ -49,21 +49,18 @@ async function bootstrap() {
         avatarUrl: adminAvatar,
       } as any);
 
-      // eslint-disable-next-line no-console
       console.log('✅ Admin creado:', adminEmail);
     } else {
-      // eslint-disable-next-line no-console
       console.log('ℹ️  Admin ya existe:', adminEmail);
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error('❌ Error creando el admin seed:', e);
   }
   // ========= Fin seed =========
 
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
-  // eslint-disable-next-line no-console
+
   console.log(`🚀 API en http://localhost:${port} con prefijo /api`);
 }
 

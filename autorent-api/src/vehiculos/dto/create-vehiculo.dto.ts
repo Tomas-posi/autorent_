@@ -3,6 +3,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsPositive,
   IsString,
   Length,
   Max,
@@ -28,6 +29,9 @@ export class CreateVehiculoDto {
   @Min(1980)
   @Max(new Date().getFullYear() + 1)
   anio: number;
+
+  @IsPositive()
+  precioPorDia: number;
 
   @IsOptional()
   @IsString()

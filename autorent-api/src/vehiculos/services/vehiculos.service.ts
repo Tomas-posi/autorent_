@@ -91,7 +91,10 @@ export class VehiculosService {
       }
 
       // Validación de aplicación: VIN único si cambió
-      if (typeof changes.vin !== 'undefined' && changes.vin !== (current as any).vin) {
+      if (
+        typeof changes.vin !== 'undefined' &&
+        changes.vin !== (current as any).vin
+      ) {
         const dupVin = await this.vehiculosRepository.findOne({
           where: { vin: changes.vin as any },
         });
@@ -105,7 +108,7 @@ export class VehiculosService {
       // Manejo de UNIQUE en base de datos
       const handled = this.handleUniqueDBError(err, {
         placa: changes.placa ?? (await this.findOne(id)).placa,
-        vin: (changes as any).vin ?? (await this.findOne(id) as any).vin,
+        vin: (changes as any).vin ?? ((await this.findOne(id)) as any).vin,
       });
       if (handled) throw handled;
 
@@ -157,10 +160,14 @@ export class VehiculosService {
 
     // Intenta identificar la columna en el detalle del error
     if (text.includes('(placa)')) {
-      return new ConflictException(`La placa ya existe${ctx.placa ? ` (${ctx.placa})` : ''}`);
+      return new ConflictException(
+        `La placa ya existe${ctx.placa ? ` (${ctx.placa})` : ''}`,
+      );
     }
     if (text.includes('(vin)')) {
-      return new ConflictException(`El VIN ya existe${ctx.vin ? ` (${ctx.vin})` : ''}`);
+      return new ConflictException(
+        `El VIN ya existe${ctx.vin ? ` (${ctx.vin})` : ''}`,
+      );
     }
     return new ConflictException('La placa o el VIN ya existen');
   }

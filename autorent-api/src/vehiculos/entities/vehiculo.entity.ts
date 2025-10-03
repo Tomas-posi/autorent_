@@ -26,6 +26,12 @@ export enum TipoCombustible {
 @Unique(['placa'])
 @Index('idx_vehiculo_estado', ['estado'])
 export class Vehiculo {
+  private static readonly currencyTransformer = {
+    to: (value: number | null | undefined) =>
+      typeof value === 'number' ? Number(value.toFixed(2)) : (value ?? null),
+    from: (value: string | null) => (value === null ? null : Number(value)),
+  };
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -54,6 +60,15 @@ export class Vehiculo {
     default: EstadoVehiculo.DISPONIBLE,
   })
   estado: EstadoVehiculo;
+
+  @Column({
+    name: 'precio_por_dia',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    transformer: Vehiculo.currencyTransformer,
+  })
+  precioPorDia: number;
 
   @CreateDateColumn({ name: 'creado_en', type: 'timestamptz' })
   creadoEn: Date;

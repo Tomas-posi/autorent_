@@ -9,7 +9,9 @@ describe('VehiculosDocumentosController', () => {
       controllers: [VehiculosDocumentosController],
     }).compile();
 
-    controller = module.get<VehiculosDocumentosController>(VehiculosDocumentosController);
+    controller = module.get<VehiculosDocumentosController>(
+      VehiculosDocumentosController,
+    );
   });
 
   it('should be defined', () => {
