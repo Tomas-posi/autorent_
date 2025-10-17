@@ -1,36 +1,44 @@
 // src/lib/vehiculos.api.ts
-// Funciones de acceso a la API de Vehículos.
-
 import { api } from './api';
-import type { CreateVehiculoDto, UpdateVehiculoDto, Vehiculo } from './types';
+import type {
+  CreateVehiculoDto,
+  UpdateVehiculoDto,
+  Vehiculo,
+  VehiculoDocumento,
+  CreateVehiculoDocumentoDto,
+} from './types';
 
-// GET /api/vehiculos
+// ===== Vehículos =====
 export function listVehiculos(): Promise<Vehiculo[]> {
   return api<Vehiculo[]>('/vehiculos');
 }
-
-// GET /api/vehiculos/:id
-export function getVehiculo(id: string): Promise<Vehiculo> {
-  return api<Vehiculo>(`/vehiculos/${id}`);
-}
-
-// POST /api/vehiculos
 export function createVehiculo(dto: CreateVehiculoDto): Promise<Vehiculo> {
-  return api<Vehiculo>('/vehiculos', {
-    method: 'POST',
-    body: JSON.stringify(dto),
-  });
+  return api<Vehiculo>('/vehiculos', { method: 'POST', body: JSON.stringify(dto) });
 }
-
-// PATCH /api/vehiculos/:id
 export function updateVehiculo(id: string, dto: UpdateVehiculoDto): Promise<Vehiculo> {
-  return api<Vehiculo>(`/vehiculos/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(dto),
-  });
+  return api<Vehiculo>(`/vehiculos/${id}`, { method: 'PATCH', body: JSON.stringify(dto) });
 }
-
-// DELETE /api/vehiculos/:id
 export function deleteVehiculo(id: string): Promise<{ ok: true }> {
   return api<{ ok: true }>(`/vehiculos/${id}`, { method: 'DELETE' });
+}
+
+// ===== Documentos de vehículo =====
+export function listVehiculoDocumentos(vehiculoId: string): Promise<VehiculoDocumento[]> {
+  return api<VehiculoDocumento[]>(`/vehiculos/${vehiculoId}/documentos`);
+}
+export function createVehiculoDocumento(
+  vehiculoId: string,
+  dto: CreateVehiculoDocumentoDto
+): Promise<VehiculoDocumento> {
+  const body = { ...dto, tamano: Number(dto.tamano) };
+  return api<VehiculoDocumento>(`/vehiculos/${vehiculoId}/documentos`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+export function deleteVehiculoDocumento(
+  vehiculoId: string,
+  documentoId: string
+): Promise<{ ok: true }> {
+  return api<{ ok: true }>(`/vehiculos/${vehiculoId}/documentos/${documentoId}`, { method: 'DELETE' });
 }

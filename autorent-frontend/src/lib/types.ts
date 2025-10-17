@@ -1,8 +1,6 @@
 // src/lib/types.ts
-// Tipos alineados con el backend de Vehículos sin usar `enum`.
-// Se usan uniones de literales y arrays const para selects y validación.
 
-// Lista de combustibles para selects y validación
+// ===== VEHÍCULOS =====
 export const COMBUSTIBLES = [
   'GASOLINA',
   'DIESEL',
@@ -11,7 +9,6 @@ export const COMBUSTIBLES = [
 ] as const;
 export type TipoCombustible = typeof COMBUSTIBLES[number];
 
-// Lista de estados para selects y validación
 export const ESTADOS = [
   'DISPONIBLE',
   'NO_DISPONIBLE',
@@ -20,7 +17,6 @@ export const ESTADOS = [
 ] as const;
 export type EstadoVehiculo = typeof ESTADOS[number];
 
-// Estructura que devuelve el backend para un vehículo
 export interface Vehiculo {
   id: string;
   placa: string;
@@ -30,11 +26,11 @@ export interface Vehiculo {
   vin?: string | null;
   combustible?: TipoCombustible | null;
   estado: EstadoVehiculo;
-  creadoEn: string;      // ISO string
-  actualizadoEn: string; // ISO string
+  precioPorDia: number;           // <— ahora requerido en el front
+  creadoEn: string;
+  actualizadoEn: string;
 }
 
-// DTOs que enviamos al backend en crear/editar
 export interface CreateVehiculoDto {
   placa: string;
   marca: string;
@@ -43,6 +39,39 @@ export interface CreateVehiculoDto {
   vin?: string;
   combustible?: TipoCombustible;
   estado?: EstadoVehiculo;
+  precioPorDia: number;           // <— nuevo campo
 }
 
 export type UpdateVehiculoDto = Partial<CreateVehiculoDto>;
+
+// ===== DOCUMENTOS DE VEHÍCULO =====
+export const TIPOS_DOCUMENTO_VEHICULO = [
+  'SOAT',
+  'TECNOMECANICA',
+  'TARJETA_PROPIEDAD',
+  'POLIZA',
+] as const;
+export type TipoVehiculoDocumento = typeof TIPOS_DOCUMENTO_VEHICULO[number];
+
+export interface VehiculoDocumento {
+  id: string;
+  tipo: TipoVehiculoDocumento | null;
+  nombreOriginal: string;
+  nombreArchivo: string;
+  mimeType: string;
+  tamano: number | string;
+  urlArchivo: string;
+  notas?: string | null;
+  creadoEn: string;
+  actualizadoEn: string;
+}
+
+export interface CreateVehiculoDocumentoDto {
+  tipo?: TipoVehiculoDocumento;
+  nombreOriginal: string;
+  nombreArchivo: string;
+  mimeType: string;
+  tamano: number;
+  urlArchivo: string;
+  notas?: string;
+}
