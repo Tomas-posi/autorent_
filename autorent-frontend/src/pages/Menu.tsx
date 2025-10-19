@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // 👈 usamos Link con HashRouter v5
 import { useMe } from '../lib/useMe';
 
 export default function MenuPage() {
@@ -23,11 +24,14 @@ export default function MenuPage() {
         </div>
 
         <div style={{ marginTop: 16, display: 'grid', gap: 8 }}>
-          <a href="#/vehiculos" style={styles.button}>Vehículos</a>
+          <Link to="/vehiculos" style={styles.button}>Vehículos</Link>
+          <Link to="/clientes" style={styles.button}>Clientes</Link>
+          <Link to="/alquileres" style={styles.button}>Alquileres</Link>
+
           {me.rol === 'ADMIN' && (
-            <a href="#/admin/register" style={{ ...styles.button, background: '#2563eb', color: '#fff' }}>
+            <Link to="/admin/register" style={{ ...styles.button, background: '#2563eb', color: '#fff' }}>
               Registrar empleado
-            </a>
+            </Link>
           )}
         </div>
       </div>
@@ -40,4 +44,3 @@ const styles: Record<string, React.CSSProperties> = {
   card: { width: 420, background: '#111827', padding: 24, borderRadius: 16, boxShadow: '0 10px 30px rgba(0,0,0,.3)', color: '#e5e7eb' },
   button: { padding: '12px 14px', borderRadius: 12, background: '#22c55e', color: '#071b0f', fontWeight: 700, textDecoration: 'none', textAlign: 'center' as const },
 };
-

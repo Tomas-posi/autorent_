@@ -1,20 +1,10 @@
 // src/lib/types.ts
 
 // ===== VEHÍCULOS =====
-export const COMBUSTIBLES = [
-  'GASOLINA',
-  'DIESEL',
-  'HIBRIDO',
-  'ELECTRICO',
-] as const;
+export const COMBUSTIBLES = ['GASOLINA', 'DIESEL', 'HIBRIDO', 'ELECTRICO'] as const;
 export type TipoCombustible = typeof COMBUSTIBLES[number];
 
-export const ESTADOS = [
-  'DISPONIBLE',
-  'NO_DISPONIBLE',
-  'EN_MANTENIMIENTO',
-  'DE_BAJA',
-] as const;
+export const ESTADOS = ['DISPONIBLE', 'NO_DISPONIBLE', 'EN_MANTENIMIENTO', 'DE_BAJA'] as const;
 export type EstadoVehiculo = typeof ESTADOS[number];
 
 export interface Vehiculo {
@@ -26,7 +16,7 @@ export interface Vehiculo {
   vin?: string | null;
   combustible?: TipoCombustible | null;
   estado: EstadoVehiculo;
-  precioPorDia: number;           // <— ahora requerido en el front
+  precioPorDia: number;
   creadoEn: string;
   actualizadoEn: string;
 }
@@ -39,7 +29,7 @@ export interface CreateVehiculoDto {
   vin?: string;
   combustible?: TipoCombustible;
   estado?: EstadoVehiculo;
-  precioPorDia: number;           // <— nuevo campo
+  precioPorDia: number;
 }
 
 export type UpdateVehiculoDto = Partial<CreateVehiculoDto>;
@@ -75,3 +65,51 @@ export interface CreateVehiculoDocumentoDto {
   urlArchivo: string;
   notas?: string;
 }
+
+// ===== CLIENTES =====
+export const TIPOS_DOCUMENTO = ['C.C', 'T.I', 'PASAPORTE', 'CEDULA_EXTRANJERIA'] as const;
+export type TipoDocumento = typeof TIPOS_DOCUMENTO[number];
+
+export interface Cliente {
+  id: string;
+  nombres: string;
+  apellidos: string;
+  tipoDocumento: TipoDocumento;
+  numeroDocumento: string;
+  email: string;
+  telefono: string;
+  direccion?: string | null;
+  creadoEn: string;
+  actualizadoEn: string;
+}
+
+export interface CreateClienteDto {
+  nombres: string;
+  apellidos: string;
+  tipoDocumento: TipoDocumento;
+  numeroDocumento: string;
+  email: string;
+  telefono: string;
+  direccion?: string | null;
+}
+
+export type UpdateClienteDto = Partial<CreateClienteDto>;
+
+// ===== ALQUILERES =====
+export type EstadoAlquiler = 'RESERVADO' | 'EN_CURSO' | 'FINALIZADO' | 'CANCELADO';
+
+export interface Alquiler {
+  id: string;
+  cliente: Cliente;                          // backend usa eager: viene el objeto
+  vehiculo: Vehiculo;                        // idem
+  fechaInicio: string;                       // YYYY-MM-DD
+  fechaFinEstimada: string;                  // YYYY-MM-DD
+  fechaFinReal?: string | null;              // YYYY-MM-DD | null
+  precioDiaReservado: number;                // copia del precio del vehículo al crear
+  totalEstimado: number;                     // días * precio día (estimado)
+  totalFinal?: number | null;                // solo tras finalizar
+  estado: EstadoAlquiler;
+  creadoEn: string;                          // ISO timestamptz
+  actualizadoEn: string;                     // ISO timestamptz
+}
+

@@ -62,3 +62,45 @@ export default function AuthPage() {
   );
 }
 
+/*
+Opcional 
+
+// OPCIONAL: usa history del Router v5
+import React from 'react';
+import { api, setToken } from '../lib/api';
+import { useHistory } from 'react-router-dom';
+
+interface LoginResponse { access_token: string; }
+
+export default function AuthPage() {
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const history = useHistory();
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const data = await api<LoginResponse>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+      setToken(data.access_token);
+      history.replace('/menu'); // en lugar de window.location.hash
+    } catch (err: any) {
+      setError(err?.message ?? 'Error de autenticación');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // … (resto igual a tu componente)
+  // Puedes mantener tu JSX original tal cual
+  return (); /* ...tu mismo JSX... 
+}
+
+ */
+

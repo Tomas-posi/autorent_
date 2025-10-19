@@ -1,8 +1,40 @@
+// src/lib/api.ts
 const BASE_URL = '/api';
 
-export function getToken() { return localStorage.getItem('token'); }
-export function setToken(t: string) { localStorage.setItem('token', t); }
-export function clearToken() { localStorage.removeItem('token'); }
+// ─────────────────────────────────────────────────────────────
+// Token helpers
+// ─────────────────────────────────────────────────────────────
+export function getToken(): string | null {
+  try {
+    return (
+      localStorage.getItem('token') ||
+      localStorage.getItem('auth_token') ||
+      sessionStorage.getItem('token') ||
+      sessionStorage.getItem('auth_token')
+    );
+  } catch {
+    return null;
+  }
+}
+
+export function setToken(t: string) {
+  try {
+    localStorage.setItem('token', t);
+  } catch {
+    /* no-op */
+  }
+}
+
+export function clearToken() {
+  try {
+    localStorage.removeItem('token');
+    localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('auth_token');
+  } catch {
+    /* no-op */
+  }
+}
 
 /**
  * Devuelve SIEMPRE un objeto plano de headers (Record<string,string>).
@@ -18,19 +50,27 @@ export function authHeaders(): Record<string, string> {
 /**
  * Wrapper de fetch que normaliza headers para que cumplan con HeadersInit
  * y agrega 'Content-Type': 'application/json' por defecto.
+ * Además, INYECTA Authorization automáticamente si hay token.
  */
 export async function api<T>(path: string, opts: RequestInit = {}): Promise<T> {
   const defaultHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
 
   let mergedHeaders: HeadersInit;
+
   if (opts.headers instanceof Headers) {
-    // Si el usuario pasó un Headers, creamos uno nuevo y fusionamos
+    // El usuario pasó un Headers: clonamos y fusionamos defaults + auth
     const h = new Headers(opts.headers);
-    for (const [k, v] of Object.entries(defaultHeaders)) h.set(k, v);
+    for (const [k, v] of Object.entries(defaultHeaders)) if (!h.has(k)) h.set(k, v);
+    const auth = authHeaders();
+    for (const [k, v] of Object.entries(auth)) if (!h.has(k)) h.set(k, v);
     mergedHeaders = h;
   } else {
-    // Si pasó objeto plano o nada, unimos con los defaults
-    mergedHeaders = { ...defaultHeaders, ...(opts.headers as Record<string, string> | undefined) };
+    // Objeto plano o undefined: unimos defaults + Authorization + lo que haya pasado el caller (si algo)
+    mergedHeaders = {
+      ...defaultHeaders,
+      ...authHeaders(),
+      ...(opts.headers as Record<string, string> | undefined),
+    };
   }
 
   const res = await fetch(`${BASE_URL}${path}`, { ...opts, headers: mergedHeaders });
@@ -39,11 +79,19 @@ export async function api<T>(path: string, opts: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     try {
       const j = JSON.parse(text);
-      throw new Error(Array.isArray(j.message) ? j.message.join(', ') : j.message || `HTTP ${res.status}`);
+      throw new Error(
+        Array.isArray(j.message)
+          ? j.message.join(', ')
+          : j.message || j.error || `HTTP ${res.status}`
+      );
     } catch {
       throw new Error(text || `HTTP ${res.status}`);
     }
   }
-  try { return JSON.parse(text) as T; } catch { return text as unknown as T; }
-}
 
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return text as unknown as T;
+  }
+}
