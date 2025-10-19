@@ -1,4 +1,6 @@
+// src/pages/AdminRegister.tsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { api, authHeaders } from '../lib/api'; // usa tu api.ts existente
 
 type Rol = 'ADMIN' | 'EMPLEADO';
@@ -74,6 +76,11 @@ export default function AdminRegister() {
 
   return (
     <div style={styles.page}>
+      {/* ← Volver */}
+      <div style={styles.pageHeader}>
+        <Link to="/menu" style={styles.backBtn}>← Volver</Link>
+      </div>
+
       <header style={styles.header}>
         <h1 style={styles.title}>Registrar empleado</h1>
         <p style={styles.subtitle}>Crea nuevos empleados (solo administradores).</p>
@@ -153,6 +160,11 @@ export default function AdminRegister() {
 
 const styles: Record<string, React.CSSProperties | any> = {
   page: { minHeight: '100vh', padding: '40px 20px', background: '#0f172a', color: '#e5e7eb', display: 'grid', placeItems: 'start center' },
+
+  // ← Volver
+  pageHeader: { width: 'min(1180px, 96%)', marginBottom: 10, display: 'flex', justifyContent: 'flex-start' },
+  backBtn: { padding: '8px 10px', borderRadius: 10, background: '#1f2937', color: '#e5e7eb', border: '1px solid #374151', fontWeight: 700, textDecoration: 'none' },
+
   header: { width: 'min(1180px, 96%)', marginBottom: 18 },
   title: { fontSize: 38, margin: 0, color: '#f3f4f6', fontWeight: 800 },
   subtitle: { margin: '8px 0 0 0', color: '#cbd5e1', fontSize: 16 },
@@ -163,6 +175,6 @@ const styles: Record<string, React.CSSProperties | any> = {
   input: { width: '100%', height: 48, background: '#0f172a', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, color: '#e5e7eb', padding: '0 14px', outline: 'none' },
   select: { width: '100%', height: 48, background: '#0f172a', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, color: '#e5e7eb', padding: '0 12px', outline: 'none' },
   primaryButton: { height: 48, background: '#22c55e', border: 'none', color: '#052e16', fontWeight: 800, fontSize: 16, borderRadius: 12, padding: '0 18px', cursor: 'pointer', boxShadow: '0 8px 24px rgba(34,197,94,.25)' },
-  alertError: { background: '#7f1d1d', color: '#fee2e2', padding: '10px 12px', borderRadius: 10, marginBottom: 10, border: '1px solid rgba(255,255,255,.08)' },
-  alertOk: { background: '#064e3b', color: '#d1fae5', padding: '10px 12px', borderRadius: 10, marginBottom: 10, border: '1px solid rgba(255,255,255,.08)' },
+  alertError: { background: '#7f1d1d', color: '#fee2e2', padding: '10px 12px', borderRadius: 10, marginBottom: 10, border: '1px solid rgba(255,255,255,0.05)' },
+  alertOk: { background: '#064e3b', color: '#d1fae5', padding: '10px 12px', borderRadius: 10, marginBottom: 10, border: '1px solid rgba(255,255,255,0.05)' },
 };

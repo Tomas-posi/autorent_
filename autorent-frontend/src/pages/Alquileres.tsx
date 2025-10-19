@@ -3,6 +3,7 @@ import React from 'react';
 import { api } from '../lib/api';
 import type { Cliente, Vehiculo, Alquiler } from '../lib/types';
 import { listAlquileres, createAlquiler, finalizarAlquiler } from '../lib/alquileres.api';
+import { Link } from 'react-router-dom';
 
 // helpers
 const money = (n?: number | null) =>
@@ -131,6 +132,10 @@ export default function AlquileresPage() {
   return (
     <div style={styles.wrap}>
       <div style={styles.container}>
+        <div style={styles.pageHeader}>
+          <Link to="/menu" style={styles.backBtn}>← Volver</Link>
+        </div>
+
         <h1 style={{ margin: 0, fontSize: 22 }}>Alquileres</h1>
         <p style={{ color: '#9ca3af', marginTop: 8 }}>
           Crea un alquiler con vehículo y cliente existentes. El total final se calcula al finalizar.
@@ -323,4 +328,8 @@ const styles: Record<string, React.CSSProperties> = {
   smallBtn: { padding: '6px 8px', borderRadius: 8, background: '#22c55e', color: '#071b0f', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 },
   smallDanger: { padding: '6px 8px', borderRadius: 8, background: '#7f1d1d', color: '#fecaca', border: '1px solid #7f1d1d', cursor: 'pointer', fontSize: 12 },
   error: { background: '#7f1d1d', color: '#fecaca', padding: 8, borderRadius: 8, fontSize: 12 },
+  
+  pageHeader: { display: 'flex', justifyContent: 'flex-start', marginBottom: 8 },
+  backBtn: { padding: '8px 10px', borderRadius: 10, background: '#1f2937', color: '#e5e7eb', border: '1px solid #374151', fontWeight: 700, textDecoration: 'none' },
+
 };

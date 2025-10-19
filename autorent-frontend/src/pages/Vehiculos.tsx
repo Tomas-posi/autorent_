@@ -1,6 +1,7 @@
 // src/pages/Vehiculos.tsx
 // CRUD de vehículos con búsqueda por placa y manejo de duplicados.
 // Incluye "Documentos" (modal) y ahora "Precio por día" manteniendo el mismo diseño oscuro.
+import { Link } from 'react-router-dom';
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -232,6 +233,10 @@ export default function VehiculosPage() {
   return (
     <div style={styles.wrap}>
       <div style={styles.container}>
+        <div style={styles.pageHeader}>
+          <Link to="/menu" style={styles.backBtn}>← Volver</Link>
+          </div>
+
         <h1 style={{ margin: 0, fontSize: 22 }}>Vehículos</h1>
         <p style={{ color: '#9ca3af', marginTop: 8 }}>Crea, edita o elimina vehículos. Usa el formulario y la tabla inferior.</p>
 
@@ -539,4 +544,8 @@ const styles: Record<string, React.CSSProperties> = {
   modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   pill: { fontSize: 12, padding: '4px 8px', borderRadius: 999, background: '#0b1220', border: '1px solid #374151' },
   docCard: { background: '#0b1220', padding: 12, borderRadius: 12, border: '1px solid #374151', marginBottom: 12, display: 'grid', gap: 10 },
+
+  pageHeader: { display: 'flex', justifyContent: 'flex-start', marginBottom: 8 },
+  backBtn: { padding: '8px 10px', borderRadius: 10, background: '#1f2937', color: '#e5e7eb', border: '1px solid #374151', fontWeight: 700, textDecoration: 'none' },
+  
 };
