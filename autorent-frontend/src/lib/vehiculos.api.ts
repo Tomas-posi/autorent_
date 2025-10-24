@@ -1,4 +1,3 @@
-// src/lib/vehiculos.api.ts
 import { api } from './api';
 import type {
   CreateVehiculoDto,
@@ -6,6 +5,8 @@ import type {
   Vehiculo,
   VehiculoDocumento,
   CreateVehiculoDocumentoDto,
+  HistorialVehiculoItem,
+  HistorialVehiculoQuery,
 } from './types';
 
 // ===== Vehículos =====
@@ -42,3 +43,19 @@ export function deleteVehiculoDocumento(
 ): Promise<{ ok: true }> {
   return api<{ ok: true }>(`/vehiculos/${vehiculoId}/documentos/${documentoId}`, { method: 'DELETE' });
 }
+
+// ===== Historial de alquileres por vehículo =====
+// Usa el endpoint del backend: GET /alquileres/vehiculo/:vehiculoId/historial
+export function listVehiculoHistorial(
+  vehiculoId: string,
+  query?: HistorialVehiculoQuery
+): Promise<HistorialVehiculoItem[]> {
+  const params = new URLSearchParams();
+  if (query?.estado) params.set('estado', query.estado);
+  if (query?.desde) params.set('desde', query.desde);
+  if (query?.hasta) params.set('hasta', query.hasta);
+  const qs = params.toString();
+  const url = `/alquileres/vehiculo/${vehiculoId}/historial${qs ? `?${qs}` : ''}`;
+  return api<HistorialVehiculoItem[]>(url);
+}
+

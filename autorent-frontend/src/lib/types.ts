@@ -1,5 +1,3 @@
-// src/lib/types.ts
-
 // ===== VEHÍCULOS =====
 export const COMBUSTIBLES = ['GASOLINA', 'DIESEL', 'HIBRIDO', 'ELECTRICO'] as const;
 export type TipoCombustible = typeof COMBUSTIBLES[number];
@@ -100,20 +98,45 @@ export type EstadoAlquiler = 'RESERVADO' | 'EN_CURSO' | 'FINALIZADO' | 'CANCELAD
 
 export interface Alquiler {
   id: string;
-  cliente: Cliente;
-  vehiculo: Vehiculo;
+  cliente: Cliente;                          // backend usa eager: viene el objeto
+  vehiculo: Vehiculo;                        // idem
   fechaInicio: string;                       // YYYY-MM-DD
   fechaFinEstimada: string;                  // YYYY-MM-DD
   fechaFinReal?: string | null;              // YYYY-MM-DD | null
-  // NUEVO: campos de cancelación (si aplica)
-  fechaCancelacion?: string | null;          // YYYY-MM-DD | null
-  motivoCancelacion?: string | null;
-  precioDiaReservado: number;
-  totalEstimado: number;
-  totalFinal?: number | null;
+  precioDiaReservado: number;                // copia del precio del vehículo al crear
+  totalEstimado: number;                     // días * precio día (estimado)
+  totalFinal?: number | null;                // solo tras finalizar
   estado: EstadoAlquiler;
   creadoEn: string;                          // ISO timestamptz
   actualizadoEn: string;                     // ISO timestamptz
+}
+
+// ===== HISTORIAL DE VEHÍCULO (solo lo necesario para listar) =====
+export interface HistorialVehiculoItem {
+  id: string;
+  estado: EstadoAlquiler;
+  fechaInicio: string;
+  fechaFinEstimada: string;
+  fechaFinReal: string | null;
+  totalEstimado: number;
+  totalFinal: number | null;
+  cliente: {
+    id: string;
+    nombres: string;
+    apellidos: string;
+    numeroDocumento: string;
+    email: string;
+  };
+  cancelacion?: {
+    fecha: string | null;
+    motivo: string | null;
+  };
+}
+
+export interface HistorialVehiculoQuery {
+  estado?: EstadoAlquiler;
+  desde?: string; // YYYY-MM-DD
+  hasta?: string; // YYYY-MM-DD
 }
 
 

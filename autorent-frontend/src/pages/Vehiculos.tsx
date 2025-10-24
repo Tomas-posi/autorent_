@@ -1,6 +1,5 @@
-// src/pages/Vehiculos.tsx
 // CRUD de vehículos con búsqueda por placa y manejo de duplicados.
-// Incluye "Documentos" (modal) y ahora "Precio por día" manteniendo el mismo diseño oscuro.
+// Incluye "Documentos" (modal), "Precio por día" y ahora "Historial" por vehículo.
 import { Link } from 'react-router-dom';
 
 import React, { useEffect, useState } from 'react';
@@ -12,6 +11,7 @@ import {
   listVehiculoDocumentos,
   createVehiculoDocumento,
   deleteVehiculoDocumento,
+  listVehiculoHistorial,
 } from '../lib/vehiculos.api';
 import type {
   Vehiculo,
@@ -22,6 +22,7 @@ import type {
   VehiculoDocumento,
   CreateVehiculoDocumentoDto,
   TipoVehiculoDocumento,
+  HistorialVehiculoItem,
 } from '../lib/types';
 import { COMBUSTIBLES, ESTADOS, TIPOS_DOCUMENTO_VEHICULO } from '../lib/types';
 
@@ -29,9 +30,10 @@ import { COMBUSTIBLES, ESTADOS, TIPOS_DOCUMENTO_VEHICULO } from '../lib/types';
 function fmt(dt: string) {
   try { return new Date(dt).toLocaleString(); } catch { return dt; }
 }
+const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('es-CO') : '—');
 // formato precio (2 decimales)
 function fmtPrice(n: number) {
-  try { return Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  try { return Number(n ?? 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   catch { return String(n); }
 }
 
@@ -57,7 +59,7 @@ const defaultForm: CreateVehiculoDto = {
   vin: '',
   combustible: undefined,
   estado: 'DISPONIBLE',
-  precioPorDia: 0,               // <— nuevo
+  precioPorDia: 0,               // <—
 };
 
 export default function VehiculosPage() {
@@ -79,6 +81,13 @@ export default function VehiculosPage() {
   const [docForm, setDocForm] = useState<CreateVehiculoDocumentoDto>({
     tipo: undefined, nombreOriginal: '', nombreArchivo: '', mimeType: '', tamano: 0, urlArchivo: '', notas: '',
   });
+
+  // ===== Historial (estado UI) =====
+  const [histOpen, setHistOpen] = useState(false);
+  const [histVehiculo, setHistVehiculo] = useState<Vehiculo | null>(null);
+  const [histRows, setHistRows] = useState<HistorialVehiculoItem[]>([]);
+  const [histLoading, setHistLoading] = useState(false);
+  const [histError, setHistError] = useState<string | null>(null);
 
   useEffect(() => { refresh(); }, []);
 
@@ -164,7 +173,7 @@ export default function VehiculosPage() {
       vin: (v as any).vin ?? '',
       combustible: (v.combustible ?? undefined) as TipoCombustible | undefined,
       estado: v.estado as EstadoVehiculo,
-      precioPorDia: Number(v.precioPorDia ?? 0),   // <—
+      precioPorDia: Number(v.precioPorDia ?? 0),
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -222,6 +231,26 @@ export default function VehiculosPage() {
     if (!docsVehiculo) return; if (!confirm('¿Eliminar este documento?')) return;
     try { await deleteVehiculoDocumento(docsVehiculo.id, id); setDocs(prev => prev.filter(d => d.id !== id)); alert('Documento eliminado'); }
     catch (e: any) { alert(e?.message ?? 'Error eliminando documento'); }
+  }
+
+  // ===== Historial (lógica) =====
+  function openHist(v: Vehiculo) {
+    setHistVehiculo(v);
+    setHistRows([]);
+    setHistError(null);
+    setHistOpen(true);
+    loadHist(v.id);
+  }
+  async function loadHist(vehiculoId: string) {
+    try {
+      setHistLoading(true);
+      const list = await listVehiculoHistorial(vehiculoId);
+      setHistRows(list);
+    } catch (e: any) {
+      setHistError(e?.message ?? 'Error cargando historial');
+    } finally {
+      setHistLoading(false);
+    }
   }
 
   const combustibles = COMBUSTIBLES;
@@ -346,7 +375,7 @@ export default function VehiculosPage() {
                     <th style={styles.th}>Año</th>
                     <th style={styles.th}>Combustible</th>
                     <th style={styles.th}>Estado</th>
-                    <th style={styles.th}>Precio/día</th>  {/* <— nueva col */}
+                    <th style={styles.th}>Precio/día</th>
                     <th style={styles.th}>Actualizado</th>
                     <th style={styles.th}>Acciones</th>
                   </tr>
@@ -361,13 +390,14 @@ export default function VehiculosPage() {
                       <td style={styles.td}>{v.anio}</td>
                       <td style={styles.td}>{v.combustible ?? '-'}</td>
                       <td style={styles.td}>{v.estado}</td>
-                      <td style={styles.td}>{fmtPrice(v.precioPorDia)}</td> {/* <— valor */}
+                      <td style={styles.td}>{fmtPrice(v.precioPorDia)}</td>
                       <td style={styles.td}>{fmt(v.actualizadoEn)}</td>
                       <td style={styles.td}>
-                        <div style={{ display: 'flex', gap: 6 }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           <button style={styles.smallBtn} onClick={() => startEdit(v)}>Editar</button>
                           <button style={styles.smallDanger} onClick={() => onDelete(v.id)}>Eliminar</button>
                           <button style={styles.smallBtn} onClick={() => openDocs(v)}>Documentos</button>
+                          <button style={styles.smallBtn} onClick={() => openHist(v)}>Historial</button>
                         </div>
                       </td>
                     </tr>
@@ -387,7 +417,6 @@ export default function VehiculosPage() {
       </div>
 
       {/* ========= MODAL DOCUMENTOS ========= */}
-      {/* …(SIN CAMBIOS desde tu versión que ya aprobaste)… */}
       {docsOpen && docsVehiculo && (
         <div style={styles.overlay} onClick={() => setDocsOpen(false)}>
           <div style={styles.modal} onClick={e => e.stopPropagation()}>
@@ -511,11 +540,85 @@ export default function VehiculosPage() {
           </div>
         </div>
       )}
+
+      {/* ========= MODAL HISTORIAL ========= */}
+      {histOpen && histVehiculo && (
+        <div style={styles.overlay} onClick={() => setHistOpen(false)}>
+          <div style={styles.modal} onClick={e => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <div>
+                <h3 style={{ margin: 0 }}>Historial de alquileres</h3>
+                <div style={{ marginTop: 6, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={styles.pill}>Placa: <strong>{histVehiculo.placa}</strong></span>
+                  <span style={styles.pill}>VIN: <strong>{(histVehiculo as any).vin}</strong></span>
+                </div>
+              </div>
+              <button style={styles.cancelBtn} onClick={() => setHistOpen(false)}>Cerrar</button>
+            </div>
+
+            <div style={styles.tableCard}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <strong>Contratos</strong>
+                {histLoading && <span style={{ color: '#9ca3af', fontSize: 12 }}>Cargando…</span>}
+              </div>
+
+              {histError ? (
+                <div style={styles.error}>Error: {histError}</div>
+              ) : (
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Inicio</th>
+                      <th style={styles.th}>Fin estimada</th>
+                      <th style={styles.th}>Fin real</th>
+                      <th style={styles.th}>Estado</th>
+                      <th style={styles.th}>Cliente</th>
+                      <th style={styles.th}>Total estimado</th>
+                      <th style={styles.th}>Total final</th>
+                      <th style={styles.th}>Cancelación</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {histRows.map(h => (
+                      <tr key={h.id}>
+                        <td style={styles.td}>{fmtDate(h.fechaInicio)}</td>
+                        <td style={styles.td}>{fmtDate(h.fechaFinEstimada)}</td>
+                        <td style={styles.td}>{fmtDate(h.fechaFinReal)}</td>
+                        <td style={styles.td}>{h.estado}</td>
+                        <td style={styles.td}>
+                          {h.cliente.nombres} {h.cliente.apellidos} — {h.cliente.numeroDocumento}
+                        </td>
+                        <td style={styles.td}>{fmtPrice(h.totalEstimado)}</td>
+                        <td style={styles.td}>{h.totalFinal != null ? fmtPrice(h.totalFinal) : '—'}</td>
+                        <td style={styles.td}>
+                          {h.cancelacion
+                            ? <>
+                                <div><strong>Fecha:</strong> {fmtDate(h.cancelacion.fecha)}</div>
+                                <div><strong>Motivo:</strong> {h.cancelacion.motivo || '—'}</div>
+                              </>
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                    {histRows.length === 0 && !histLoading && (
+                      <tr>
+                        <td colSpan={8} style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>
+                          Sin historial de alquileres
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/** Estilos iguales */
+/** Estilos */
 const styles: Record<string, React.CSSProperties> = {
   wrap: { minHeight: '100vh', padding: 24, background: '#0f172a', color: '#e5e7eb' },
   container: { maxWidth: 1000, margin: '0 auto' },
@@ -547,5 +650,4 @@ const styles: Record<string, React.CSSProperties> = {
 
   pageHeader: { display: 'flex', justifyContent: 'flex-start', marginBottom: 8 },
   backBtn: { padding: '8px 10px', borderRadius: 10, background: '#1f2937', color: '#e5e7eb', border: '1px solid #374151', fontWeight: 700, textDecoration: 'none' },
-  
 };
