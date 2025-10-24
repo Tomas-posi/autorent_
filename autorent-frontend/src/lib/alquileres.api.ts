@@ -1,4 +1,3 @@
-// src/lib/alquileres.api.ts
 import { api } from './api';
 import type { Alquiler } from './types';
 
@@ -11,6 +10,11 @@ export interface CreateAlquilerDto {
 
 export interface FinalizarAlquilerDto {
   fechaFinReal: string;       // YYYY-MM-DD
+}
+
+export interface CancelarAlquilerDto {
+  fechaCancelacion?: string;  // YYYY-MM-DD (si no va, backend usa hoy)
+  motivo: string;             // obligatorio
 }
 
 export function listAlquileres(): Promise<Alquiler[]> {
@@ -34,3 +38,12 @@ export function finalizarAlquiler(id: string, dto: FinalizarAlquilerDto): Promis
     body: JSON.stringify(dto),
   });
 }
+
+export function cancelarAlquiler(id: string, dto: CancelarAlquilerDto): Promise<Alquiler> {
+  return api<Alquiler>(`/alquileres/${id}/cancelar`, {
+    method: 'PATCH',
+    body: JSON.stringify(dto),
+  });
+}
+
+

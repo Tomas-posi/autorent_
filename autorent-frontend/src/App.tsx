@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Route, Redirect, Switch } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import AuthPage from './pages/Auth';
 import MenuPage from './pages/Menu';
 import AdminRegister from './pages/AdminRegister';
@@ -31,7 +31,7 @@ function PageContainer({ children }: { children: React.ReactNode }) {
 /** Rutas protegidas por token */
 function Protected({ children }: { children: React.ReactElement }) {
   const token = getToken();
-  if (!token) return <Redirect to="/auth" />;
+  if (!token) return <Navigate to="/auth" replace />;
   return children;
 }
 
@@ -39,69 +39,65 @@ function Protected({ children }: { children: React.ReactElement }) {
 function AdminOnly({ children }: { children: React.ReactElement }) {
   const { me, loading } = useMe();
   if (loading) return <div style={{ padding: 20 }}>Cargando…</div>;
-  if (!me) return <Redirect to="/auth" />;
-  if (me.rol !== 'ADMIN') return <Redirect to="/menu" />;
+  if (!me) return <Navigate to="/auth" replace />;
+  if (me.rol !== 'ADMIN') return <Navigate to="/menu" replace />;
   return children;
 }
 
 export default function App(): React.ReactElement {
   return (
     <Router>
-      <Switch>
+      <Routes>
         {/* Auth mantiene su propio layout centrado a pantalla completa */}
-        <Route exact path="/auth" component={AuthPage} />
+        <Route path="/auth" element={<AuthPage />} />
 
         <Route
-          exact
           path="/menu"
-          render={() => (
+          element={
             <Protected>
               <PageContainer>
                 <MenuPage />
               </PageContainer>
             </Protected>
-          )}
+          }
         />
 
         <Route
-          exact
           path="/vehiculos"
-          render={() => (
+          element={
             <Protected>
               <PageContainer>
                 <VehiculosPage />
               </PageContainer>
             </Protected>
-          )}
+          }
         />
 
         <Route
-          exact
           path="/clientes"
-          render={() => (
+          element={
             <Protected>
               <PageContainer>
                 <ClientesPage />
               </PageContainer>
             </Protected>
-          )}
-        />
-        <Route
-        exact
-        path="/alquileres"
-         render={() => (
-         <Protected>
-          <PageContainer>
-            <AlquileresPage />
-            </PageContainer>
-            </Protected>
-          )}
+          }
         />
 
         <Route
-          exact
+          path="/alquileres"
+          element={
+            <Protected>
+              <PageContainer>
+                <AlquileresPage />
+              </PageContainer>
+            </Protected>
+          }
+        />
+
+        <Route
           path="/admin/register"
-          render={() => (
+          element={
             <Protected>
               <AdminOnly>
                 <PageContainer>
@@ -109,11 +105,11 @@ export default function App(): React.ReactElement {
                 </PageContainer>
               </AdminOnly>
             </Protected>
-          )}
+          }
         />
 
-        <Redirect to="/auth" />
-      </Switch>
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
     </Router>
   );
 }

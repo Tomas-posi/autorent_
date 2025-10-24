@@ -66,6 +66,7 @@ export class Vehiculo {
     type: 'numeric',
     precision: 10,
     scale: 2,
+    default: 0, // <-- evita futuros NULL al insertar
     transformer: Vehiculo.currencyTransformer,
   })
   precioPorDia: number;

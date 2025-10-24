@@ -73,6 +73,17 @@ export class Alquiler {
   })
   totalFinal?: number | null;
 
+  @Column({ name: 'fecha_cancelacion', type: 'date', nullable: true })
+  fechaCancelacion?: string | null;
+
+  @Column({
+    name: 'motivo_cancelacion',
+    type: 'varchar',
+    length: 250,
+    nullable: true,
+  })
+  motivoCancelacion?: string | null;
+
   @Column({
     type: 'enum',
     enum: EstadoAlquiler,

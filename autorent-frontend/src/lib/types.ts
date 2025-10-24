@@ -100,16 +100,20 @@ export type EstadoAlquiler = 'RESERVADO' | 'EN_CURSO' | 'FINALIZADO' | 'CANCELAD
 
 export interface Alquiler {
   id: string;
-  cliente: Cliente;                          // backend usa eager: viene el objeto
-  vehiculo: Vehiculo;                        // idem
+  cliente: Cliente;
+  vehiculo: Vehiculo;
   fechaInicio: string;                       // YYYY-MM-DD
   fechaFinEstimada: string;                  // YYYY-MM-DD
   fechaFinReal?: string | null;              // YYYY-MM-DD | null
-  precioDiaReservado: number;                // copia del precio del vehículo al crear
-  totalEstimado: number;                     // días * precio día (estimado)
-  totalFinal?: number | null;                // solo tras finalizar
+  // NUEVO: campos de cancelación (si aplica)
+  fechaCancelacion?: string | null;          // YYYY-MM-DD | null
+  motivoCancelacion?: string | null;
+  precioDiaReservado: number;
+  totalEstimado: number;
+  totalFinal?: number | null;
   estado: EstadoAlquiler;
   creadoEn: string;                          // ISO timestamptz
   actualizadoEn: string;                     // ISO timestamptz
 }
+
 

@@ -1,9 +1,9 @@
-// src/pages/Alquileres.tsx
 import React from 'react';
 import { api } from '../lib/api';
 import type { Cliente, Vehiculo, Alquiler } from '../lib/types';
-import { listAlquileres, createAlquiler, finalizarAlquiler } from '../lib/alquileres.api';
+import { listAlquileres, createAlquiler, finalizarAlquiler, cancelarAlquiler } from '../lib/alquileres.api';
 import { Link } from 'react-router-dom';
+import { useMe } from '../lib/useMe';
 
 // helpers
 const money = (n?: number | null) =>
@@ -15,8 +15,11 @@ const daysBetween = (a?: string, b?: string) => {
   const d = Math.ceil((B - A) / (1000 * 60 * 60 * 24));
   return d > 0 ? d : 0;
 };
+const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export default function AlquileresPage() {
+  const { me } = useMe();
+
   const [vehiculos, setVehiculos] = React.useState<Vehiculo[]>([]);
   const [clientes, setClientes] = React.useState<Cliente[]>([]);
   const [rows, setRows] = React.useState<Alquiler[]>([]);
@@ -32,11 +35,6 @@ export default function AlquileresPage() {
   // finalizar inline
   const [finishingId, setFinishingId] = React.useState<string | null>(null);
   const [finReal, setFinReal] = React.useState<string>('');
-
-  const vehiculosDisponibles = React.useMemo(
-    () => vehiculos.filter(v => v.estado === 'DISPONIBLE'),
-    [vehiculos]
-  );
 
   const vehSel = React.useMemo(
     () => vehiculos.find(v => v.id === vehiculoId),
@@ -91,13 +89,11 @@ export default function AlquileresPage() {
         fechaInicio: inicio,
         fechaFinEstimada: finEst,
       });
-      // prepend
       setRows(prev => [created, ...prev]);
-      // el vehículo dejó de estar disponible: refrescar lista de vehículos
+
       const vs = await api<Vehiculo[]>('/vehiculos');
       setVehiculos(vs);
 
-      // limpiar form
       setVehiculoId(''); setClienteId(''); setInicio(''); setFinEst('');
       alert('Alquiler creado');
     } catch (e: any) {
@@ -119,7 +115,6 @@ export default function AlquileresPage() {
     try {
       const updated = await finalizarAlquiler(id, { fechaFinReal: finReal });
       setRows(prev => prev.map(x => (x.id === id ? updated : x)));
-      // el vehículo volvió a estar disponible: refrescar
       const vs = await api<Vehiculo[]>('/vehiculos');
       setVehiculos(vs);
       cancelFinalizar();
@@ -128,6 +123,24 @@ export default function AlquileresPage() {
       alert(e?.message ?? 'No se pudo finalizar');
     }
   }
+
+  async function onCancelar(row: Alquiler) {
+    const motivo = prompt('Motivo de cancelación (obligatorio):')?.trim() ?? '';
+    if (!motivo) { alert('Debes ingresar un motivo.'); return; }
+    try {
+      const updated = await cancelarAlquiler(row.id, { motivo, fechaCancelacion: todayISO() });
+      setRows(prev => prev.map(x => (x.id === row.id ? updated : x)));
+      alert('Alquiler cancelado');
+    } catch (e: any) {
+      alert(e?.message ?? 'No se pudo cancelar');
+    }
+  }
+
+  // lógica UI para acciones
+  const isAdmin = me?.rol === 'ADMIN';
+  const canFinalize = (r: Alquiler) => r.estado === 'EN_CURSO';
+  const canCancel = (r: Alquiler) =>
+    isAdmin && r.estado === 'RESERVADO' && todayISO() < r.fechaInicio;
 
   return (
     <div style={styles.wrap}>
@@ -153,9 +166,9 @@ export default function AlquileresPage() {
                 required
               >
                 <option value="">-- Seleccionar --</option>
-                {vehiculosDisponibles.map(v => (
+                {vehiculos.map(v => (
                   <option key={v.id} value={v.id}>
-                    {v.placa} — {v.marca} {v.modelo} (${money(v.precioPorDia)})
+                    {v.placa} — {v.marca} {v.modelo} ({money(v.precioPorDia)})
                   </option>
                 ))}
               </select>
@@ -222,7 +235,13 @@ export default function AlquileresPage() {
 
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button type="submit" style={styles.saveBtn}>Crear alquiler</button>
-            <button type="button" style={styles.cancelBtn} onClick={() => { setVehiculoId(''); setClienteId(''); setInicio(''); setFinEst(''); }}>Limpiar</button>
+            <button
+              type="button"
+              style={styles.cancelBtn}
+              onClick={() => { setVehiculoId(''); setClienteId(''); setInicio(''); setFinEst(''); }}
+            >
+              Limpiar
+            </button>
           </div>
         </form>
 
@@ -248,6 +267,7 @@ export default function AlquileresPage() {
                     <th style={styles.th}>Total estimado</th>
                     <th style={styles.th}>Total final</th>
                     <th style={styles.th}>Estado</th>
+                    <th style={styles.th}>Motivo cancelación</th>
                     <th style={{ ...styles.th, textAlign: 'right' }}>Acciones</th>
                   </tr>
                 </thead>
@@ -267,8 +287,13 @@ export default function AlquileresPage() {
                       <td style={styles.td}>{money(r.totalEstimado)}</td>
                       <td style={styles.td}>{money(r.totalFinal)}</td>
                       <td style={styles.td}>{r.estado}</td>
+                      <td style={styles.td}>
+                        {'cancelacion' in (r as any) && (r as any).cancelacion?.motivo
+                          ? (r as any).cancelacion!.motivo
+                          : (r as any).motivoCancelacion ?? '—'}
+                      </td>
                       <td style={{ ...styles.td, textAlign: 'right' }}>
-                        {r.estado === 'EN_CURSO' ? (
+                        {canFinalize(r) ? (
                           finishingId === r.id ? (
                             <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                               <input
@@ -284,6 +309,8 @@ export default function AlquileresPage() {
                           ) : (
                             <button style={styles.smallBtn} onClick={() => openFinalizar(r)}>Finalizar</button>
                           )
+                        ) : canCancel(r) ? (
+                          <button style={styles.smallDanger} onClick={() => onCancelar(r)}>Cancelar</button>
                         ) : (
                           <span style={{ color: '#9ca3af' }}>—</span>
                         )}
@@ -292,7 +319,7 @@ export default function AlquileresPage() {
                   ))}
                   {rows.length === 0 && (
                     <tr>
-                      <td colSpan={10} style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>
+                      <td colSpan={11} style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>
                         Sin registros
                       </td>
                     </tr>
@@ -327,9 +354,12 @@ const styles: Record<string, React.CSSProperties> = {
 
   smallBtn: { padding: '6px 8px', borderRadius: 8, background: '#22c55e', color: '#071b0f', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 },
   smallDanger: { padding: '6px 8px', borderRadius: 8, background: '#7f1d1d', color: '#fecaca', border: '1px solid #7f1d1d', cursor: 'pointer', fontSize: 12 },
+
   error: { background: '#7f1d1d', color: '#fecaca', padding: 8, borderRadius: 8, fontSize: 12 },
-  
   pageHeader: { display: 'flex', justifyContent: 'flex-start', marginBottom: 8 },
   backBtn: { padding: '8px 10px', borderRadius: 10, background: '#1f2937', color: '#e5e7eb', border: '1px solid #374151', fontWeight: 700, textDecoration: 'none' },
-
 };
+
+
+
+
