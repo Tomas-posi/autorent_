@@ -70,24 +70,24 @@ This separation makes the project easier to maintain, scale, and deploy.
 
 ## Running the Project Locally
 
-## 1. Clone the repository
+1. Clone the repository
   ```bash
   git clone https://github.com/Tomas-posi/autorent_.git
-## 2. Install backend dependencies
+2. Install backend dependencies
   cd autorent_
   cd autorent-api
   npm install
-## 3. Install Frontend dependencies
+3. Install Frontend dependencies
   cd ../autorent-frontend
   npm install
-## 4. Configure environment variables
-Create the required .env files for the backend with your PostgreSQL credentials and application settings.
-## 5. Start the backend
-cd ../autorent-api
-npm run start:dev
-## 6. Start the frontend
-cd ../autorent-frontend
-npm run dev
+4. Configure environment variables
+  Create the required .env files for the backend with your PostgreSQL credentials and application settings.
+5. Start the backend
+  cd ../autorent-api
+  npm run start:dev
+6. Start the frontend
+  cd ../autorent-frontend
+  npm run dev
 
 
 
